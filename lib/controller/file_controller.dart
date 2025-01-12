@@ -7,7 +7,7 @@ class FileController extends GetxController {
   var selectedImage = ''.obs;
   var location = ''.obs;
   var isLoading = false.obs;
-  final String uploadUrl = 'https://api.escuelajs.co/api/v1/files/upload';
+  final String uploadUrl = 'https://interview-mock-api.onrender.com/upload';
 
   // Function to pick an image
   Future<void> pickImage() async {
@@ -23,7 +23,8 @@ class FileController extends GetxController {
     }
   }
 
-  Future<void> uploadImage() async {
+  Future<void> uploadImage(String token) async {
+    debugPrint('TOKEN: $token');
     if (selectedImage.value.isEmpty) {
       Get.snackbar('Error', 'Please select an image first.');
       return;
@@ -40,7 +41,13 @@ class FileController extends GetxController {
       });
       debugPrint(fileName);
 
-      dio.Response response = await dio.Dio().post(uploadUrl, data: formData);
+      dio.Response response = await dio.Dio().post(uploadUrl,
+          data: formData,
+          options: dio.Options(headers: {
+            'accept': 'application/json',
+            'Authorization': "$token",
+            'Content-Type': 'multipart/form-data',
+          }));
 
       if (response.statusCode == 201) {
         debugPrint(response.data['location']);
@@ -58,7 +65,8 @@ class FileController extends GetxController {
 
   Future<String> fetchImage() async {
     try {
-      dio.Response response = await dio.Dio().get(location.value);
+      dio.Response response =
+          await dio.Dio().get('https://interview-mock-api.onrender.com/upload');
       debugPrint(response.statusCode.toString());
 
       if (response.statusCode == 200) {

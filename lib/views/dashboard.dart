@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import 'package:task_flutter/controller/file_controller.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, required this.tknValue});
+
+  final String tknValue;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +39,7 @@ class HomeScreen extends StatelessWidget {
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
                         onPressed: () async {
-                          await controller.uploadImage();
+                          await controller.uploadImage(tknValue);
                         },
                         child: const Text('Upload Image'),
                       );

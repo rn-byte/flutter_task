@@ -4,13 +4,13 @@ import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task_flutter/views/dashboard.dart';
-
 import '../views/login.dart';
 
 class AuthController extends GetxController {
   final emailController = TextEditingController().obs;
   final passController = TextEditingController().obs;
   var apiUrl = 'https://interview-mock-api.onrender.com';
+  RxString tknValue = "".obs;
 
   Future<void> signup(String uName, String password) async {
     //var dio = Dio();
@@ -46,7 +46,8 @@ class AuthController extends GetxController {
       if (response.statusCode == 200) {
         debugPrint('Login successful');
         debugPrint(response.data['token']);
-        Get.offAll(() => const HomeScreen());
+        tknValue.value = response.data['token'];
+        Get.offAll(() => HomeScreen(tknValue: response.data['token']));
       }
     } catch (e) {
       debugPrint("Error : ${e.toString()}");
