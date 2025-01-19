@@ -47,13 +47,15 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
-                  var imageUrl = await controller.fetchImage();
-                  if (imageUrl.isNotEmpty) {
+                  List<Map<String, dynamic>> files =
+                      await controller.fetchImage(tknValue);
+
+                  if (files.isNotEmpty) {
                     showDialog(
                       // ignore: use_build_context_synchronously
                       context: context,
                       builder: (context) => AlertDialog(
-                        content: Image.network(imageUrl),
+                        content: Text(files.toString()),
                         actions: [
                           TextButton(
                             onPressed: () => Get.back(),

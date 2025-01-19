@@ -1,13 +1,14 @@
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 
 class FileController extends GetxController {
   var selectedImage = ''.obs;
   var location = ''.obs;
   var isLoading = false.obs;
-  final String uploadUrl = 'https://interview-mock-api.onrender.com/upload';
+  final String uploadUrl = '/upload';
 
   // Function to pick an image
   Future<void> pickImage() async {
@@ -24,59 +25,81 @@ class FileController extends GetxController {
   }
 
   Future<void> uploadImage(String token) async {
-    debugPrint('TOKEN: $token');
-    if (selectedImage.value.isEmpty) {
-      Get.snackbar('Error', 'Please select an image first.');
-      return;
-    }
-
     isLoading.value = true;
 
     try {
-      var fileName = selectedImage.value.split('/').last;
+      final fileName = selectedImage.value.split('/').last;
 
-      dio.FormData formData = dio.FormData.fromMap({
-        'file': await dio.MultipartFile.fromFile(selectedImage.value,
-            filename: fileName),
+      final formData = dio.FormData.fromMap({
+        'image': await dio.MultipartFile.fromFile(selectedImage.value,
+            filename: fileName, contentType: MediaType('image', 'jpeg')),
       });
-      debugPrint(fileName);
+      print(token);
+      print(formData.toString());
 
-      dio.Response response = await dio.Dio().post(uploadUrl,
-          data: formData,
-          options: dio.Options(headers: {
+      debugPrint('File path: ${selectedImage.value}');
+      debugPrint('File name: $fileName');
+      debugPrint('FormData Files: ${formData.files}');
+      debugPrint('FormData Fields: ${formData.fields}');
+
+      final response = await dio.Dio().post(
+        'https://interview-mock-api.onrender.com/upload',
+        data: formData,
+        options: dio.Options(
+          headers: {
             'accept': 'application/json',
-            'Authorization': "$token",
-            'Content-Type': 'multipart/form-data',
-          }));
+            'Authorization': 'Bearer $token',
+          },
+          validateStatus: (status) => true,
+        ),
+      );
+      print(response.data);
+
+      dio.Dio dioInstance = dio.Dio();
+      dioInstance.interceptors.add(dio.LogInterceptor(
+        request: true,
+        requestBody: true,
+        responseBody: true,
+        responseHeader: true,
+      ));
 
       if (response.statusCode == 201) {
-        debugPrint(response.data['location']);
-        location.value = response.data['location'];
+        //imageUrl.value = response.data['upload']['storedFilename'];
         Get.snackbar('Success', 'Image uploaded successfully.');
       } else {
-        Get.snackbar('Error', 'Failed to upload image.');
+        Get.snackbar('Error', 'Failed to upload image: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Error : Something went wrong. => ${e.toString()}');
+      Get.snackbar('Error', 'Something went wrong: ${e.toString()}');
+      print('Error: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  Future<String> fetchImage() async {
+  Future<List<Map<String, dynamic>>> fetchImage(String token) async {
     try {
-      dio.Response response =
-          await dio.Dio().get('https://interview-mock-api.onrender.com/upload');
+      dio.Response response = await dio.Dio().get(
+        'https://interview-mock-api.onrender.com/uploads',
+        options: dio.Options(
+          headers: {
+            'accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          validateStatus: (status) => true,
+        ),
+      );
       debugPrint(response.statusCode.toString());
 
       if (response.statusCode == 200) {
-        return location.value;
+        print(response.data['uploads']);
+        return response.data;
       } else {
         throw Exception('Failed to fetch image.');
       }
     } catch (e) {
       Get.snackbar('Error', 'Something went wrong while fetching the image.');
-      return '';
+      throw Exception('Failed to fetch image: $e');
     }
   }
 }
